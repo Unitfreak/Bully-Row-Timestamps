@@ -10,19 +10,17 @@
 <br />
 <div align="center">
   <a href="https://github.com/Unitfreak/Bully-Row-Timestamps">
-    <img src="images/logo.png" alt="Logo" width="80" height="80">
+    <img src="solar-system-orbit-svgrepo-com.svg" alt="Logo" width="120" height="120">
   </a>
 
-  <h3 align="center">Best-README-Template</h3>
+  <h3 align="center">Bully Row Timestamps</h3>
 
   <p align="center">
-    An awesome README template to jumpstart your projects!
+    An alternative time system for the necessarily precise.
     <br />
-    <a href="https://github.com/othneildrew/Best-README-Template"><strong>Explore the docs »</strong></a>
+    <a href="https://physwiki.eeyabo.net"><strong>Explore the Wiki! »</strong></a>
     <br />
     <br />
-    <a href="https://github.com/othneildrew/Best-README-Template">View Demo</a>
-    ·
     <a href="https://github.com/othneildrew/Best-README-Template/issues">Report Bug</a>
     ·
     <a href="https://github.com/othneildrew/Best-README-Template/issues">Request Feature</a>
