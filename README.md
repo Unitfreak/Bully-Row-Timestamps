@@ -78,7 +78,7 @@ To run this code simply copy the contents of Java_Bully.html and run it in your 
 <!-- USAGE EXAMPLES -->
 ## Usage
 
-For information about how to use this time system please visit the [Bully Row Wiki](bullyrow.eeyabo.net). 
+For information about how to use this time system please visit the [Bully Row Wiki](https://bullyrow.eeyabo.net). 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
