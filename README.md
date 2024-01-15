@@ -174,6 +174,7 @@ Special Thanks to the following for resources and support.
 * [Choose an Open Source License](https://choosealicense.com)
 * [Img Shields](https://shields.io)
 * [GitHub Pages](https://pages.github.com)
+* [SVG Repo](https://www.svgrepo.com)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
