@@ -61,9 +61,6 @@ The Bully Row time system is neither a clock nor a calendar. Clocks are tied to 
 
 This system tracks time based on the alignment of the gas giants, and the center of the universe. By locating these objects as they travel through space we can track time to an incredibly precise degree, without the need to constantly adjust the numbers to align them to a human perspective.This makes astrophysics calculations much easier, and, if adopted to a wider degree, could allow the simplification of other systems as well.
 
-If you have any feature requests please let me know in the [issues](https://github.com/Unitfreak/Bully-Row-Timestamps/issues).
-
-
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -81,9 +78,7 @@ To run this code simply copy the contents of Java_Bully.html and run it in your 
 <!-- USAGE EXAMPLES -->
 ## Usage
 
-Use this space to show useful examples of how a project can be used. Additional screenshots, code examples and demos work well in this space. You may also link to more resources.
-
-_For more examples, please refer to the [Documentation](https://example.com)_
+For information about how to use this time system please visit the [Bully Row Wiki](bullyrow.eeyabo.net). 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -92,7 +87,7 @@ _For more examples, please refer to the [Documentation](https://example.com)_
 <!-- CONTRIBUTING -->
 ## Contributing
 
-Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+If you would like new features or come across any bugs and know how to fix it, feel free to contribute! Any contributions you make are **greatly appreciated**.
 
 If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement".
 Don't forget to give the project a star! Thanks again!
