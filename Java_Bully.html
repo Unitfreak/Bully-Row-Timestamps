@@ -1,11 +1,47 @@
 <!DOCTYPE html>
 <html>
 
+<head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 80vh;
+            margin: 0;
+            padding: 0;
+            flex-direction: column;
+        }
+
+        h2 {
+            color: #444;
+        }
+
+        h1 {
+            color: #666;
+        }
+
+        a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
 <body onload="startTime()">
 
-<h2>Current Bully Row Timestamp:</h2>
+    <h2>Current Bully Row Timestamp:</h2>
 
-<div id="txt"></div>
+    <div id="txt"></div>
+
+	<a href="https://bullyrow.eeyabo.net" style="padding-top: 15px;">Learn how it works!</a>
 
 <script>
 function startTime() {
@@ -32,6 +68,6 @@ function startTime() {
   setTimeout(startTime, 305);
 }
 </script>
-
 </body>
+
 </html>
