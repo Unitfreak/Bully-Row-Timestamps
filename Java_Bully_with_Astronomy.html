@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+div.upperview {
+  text-align: center;
+}
+div.lowerview {
+  text-align: center;
+  height: 400;
+  width: 800;
+}
+
+</style>
+</head>
+
+<body onload="startTime()">
+
+<div id="txt" class="upperview">
+</div>
+
+(<a target="iframe_a" href="https://upload.wikimedia.org/wikipedia/commons/6/6d/Opt_10_Zoom.png">Sagittarius A*</a>)
+(<a target="iframe_a" href="https://upload.wikimedia.org/wikipedia/commons/2/2f/Opt_20_trim.png">Earth North Pole</a>)
+(<a target="iframe_a" href="https://upload.wikimedia.org/wikipedia/commons/0/05/Opt_70_trim.png">Jupiter</a>)
+(<a target="iframe_a" href="https://upload.wikimedia.org/wikipedia/commons/b/b7/Opt_71_trim.png">Saturn</a>)
+(<a target="iframe_a" href="https://upload.wikimedia.org/wikipedia/commons/6/6b/Opt_72_trim.png">Uranus</a>)
+(<a target="iframe_a" href="https://upload.wikimedia.org/wikipedia/commons/c/c5/Opt_73_trim.png">Neptune</a>)
+(<a target="iframe_a" href="https://physwiki.eeyabo.net/index.php/Main_Page">Wiki</a>)
+(<a target="iframe_a" href="https://docs.google.com/presentation/d/1j0RRVlYDchGj4yrbTFmdaZXtnHcOzitg/edit#slide=id.p1">Presentation</a>)
+
+<div class="lowerview"><iframe width="100%" height="555" name="iframe_a"></iframe></div>
+
+<script>
+function startTime() {
+  
+  const now = new Date();
+  const Tta_per_ms = 1/30550;
+  const Jun_21_1998_noon_UTC = 898430400000;
+  const TAI_leap_milliseconds = 37000;
+  const anchor_byte3 = parseInt("8209", 16);
+  const anchor_byte2 = parseInt("28E9", 16);
+  const anchor_byte1 = parseInt("F800", 16);
+
+  let Tta_raw = Math.round((now.getTime() - (Jun_21_1998_noon_UTC - TAI_leap_milliseconds)) * Tta_per_ms * 1000) / 1000;
+  let Tta_dec = ((Tta_raw % 100) + 100) % 100;
+  Tta = ((Tta_raw - Tta_dec) / 100) + anchor_byte1;
+
+  let Tta_hex1 = ((Tta % 16**4) + 16**4) % 16**4;
+  Tta = ((Tta - Tta_hex1) / 16**4) + anchor_byte2;
+
+  let Tta_hex2 = ((Tta % 16**4) + 16**4) % 16**4;
+  let Tta_hex3 = ((Tta - Tta_hex2) / 16**4) + anchor_byte3;
+
+  document.getElementById('txt').innerHTML = now + "<h1>Current Timestamp:  " + Tta_hex3.toString(16).toUpperCase().padStart(4, "0") + " " + Tta_hex2.toString(16).toUpperCase().padStart(4, "0") + " " + Tta_hex1.toString(16).toUpperCase().padStart(4, "0") + " (+ " + Tta_dec.toFixed(2) + "%)</h1>";
+
+  setTimeout(startTime, 305);
+}
+</script>
+
+</body>
+</html>
