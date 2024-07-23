@@ -41,8 +41,8 @@ function startTime() {
   const Jun_21_1998_noon_UTC = 898430400000;
   const TAI_leap_milliseconds = 37000;
   const anchor_byte3 = parseInt("8209", 16);
-  const anchor_byte2 = parseInt("28E9", 16);
-  const anchor_byte1 = parseInt("F800", 16);
+  const anchor_byte2 = parseInt("2800", 16);
+  const anchor_byte1 = parseInt("0000", 16);
 
   let Tta_raw = Math.round((now.getTime() - (Jun_21_1998_noon_UTC - TAI_leap_milliseconds)) * Tta_per_ms * 1000) / 1000;
   let Tta_dec = ((Tta_raw % 100) + 100) % 100;
