@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+
+<body onload="startTime()">
+
+<h2>Current Bully Row Timestamp:</h2>
+
+<div id="txt"></div>
+
+<script>
+function startTime() {
+  const now = new Date();
+  const Tta_per_ms = 1/30550;
+  const Jun_21_1998_noon_UTC = 898430400000;
+  const TAI_leap_milliseconds = 37000;
+  const anchor_byte3 = parseInt("8209", 16);
+  const anchor_byte2 = parseInt("2800", 16);
+  const anchor_byte1 = parseInt("0000", 16);
+
+  let Tta_raw = Math.round((now.getTime() - (Jun_21_1998_noon_UTC - TAI_leap_milliseconds)) * Tta_per_ms * 1000) / 1000;
+  let Tta_dec = ((Tta_raw % 100) + 100) % 100;
+  Tta = ((Tta_raw - Tta_dec) / 100) + anchor_byte1;
+
+  let Tta_hex1 = ((Tta % 16**4) + 16**4) % 16**4;
+  Tta = ((Tta - Tta_hex1) / 16**4) + anchor_byte2;
+
+  let Tta_hex2 = ((Tta % 16**4) + 16**4) % 16**4;
+  let Tta_hex3 = ((Tta - Tta_hex2) / 16**4) + anchor_byte3;
+
+  document.getElementById('txt').innerHTML =  "<h1>" + Tta_hex3.toString(16).toUpperCase().padStart(4, "0") + " " + Tta_hex2.toString(16).toUpperCase().padStart(4, "0") + " " + Tta_hex1.toString(16).toUpperCase().padStart(4, "0") + "</h1>" + " + " + ((1000 * Tta_raw) % 100000).toFixed(0) + " Ga" + "<br /><br /><br />Your Local Time:<br />" + now;
+
+  setTimeout(startTime, 30);
+}
+</script>
+
+</body>
+</html>
