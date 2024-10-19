@@ -65,7 +65,8 @@ function startTime() {
 
   document.getElementById('txt').innerHTML =  "<h1>" + Tta_hex3.toString(16).toUpperCase().padStart(4, "0") + " " + Tta_hex2.toString(16).toUpperCase().padStart(4, "0") + " " + Tta_hex1.toString(16).toUpperCase().padStart(4, "0") 
 	  + "  <small><italic>(+" + Tta_dec.toFixed(2) + "%)</italic></small></h1>"
-	  + " " + Tta_hex1.toString(16).toUpperCase().padStart(4, "0") + "</h1>" + " + " + Tta_dec.toFixed(2) + "% (Tta)" 
+	  + " " + Tta_hex1.toString(16).toUpperCase().padStart(4, "0")
+	  + " + " + Tta_dec.toFixed(2) + "% (Tta)" 
 	  + " + " + ((1000 * Tta_raw) % 100000).toFixed(0) + " Ga" 
 	  + "<br /><br /><br />Your Local Time:<br />" + now;
   setTimeout(startTime, 305);
