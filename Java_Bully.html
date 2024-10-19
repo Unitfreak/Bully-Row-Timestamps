@@ -53,9 +53,10 @@ function startTime() {
   const anchor_byte2 = parseInt("2800", 16);
   const anchor_byte1 = parseInt("0000", 16);
 
-  let Tta_raw = Math.round((now.getTime() - (Jun_21_1998_noon_UTC - TAI_leap_milliseconds)) * Tta_per_ms * 1000) / 1000;
-  let Tta_dec = ((Tta_raw % 100) + 100) % 100;
-  Tta = ((Tta_raw - Tta_dec) / 100) + anchor_byte1;
+  let Tta_raw = now.getTime() - (Jun_21_1998_noon_UTC - TAI_leap_milliseconds)) * Tta_per_ms * 1000) / 1000;
+  let Tta_round = Math.round(Tta_raw)
+  let Tta_dec = ((Tta_round % 100) + 100) % 100;
+  Tta = ((Tta_round - Tta_dec) / 100) + anchor_byte1;
 
   let Tta_hex1 = ((Tta % 16**4) + 16**4) % 16**4;
   Tta = ((Tta - Tta_hex1) / 16**4) + anchor_byte2;
