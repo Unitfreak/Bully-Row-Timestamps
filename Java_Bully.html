@@ -53,10 +53,9 @@ function startTime() {
   const anchor_byte2 = parseInt("2800", 16);
   const anchor_byte1 = parseInt("0000", 16);
 
-  let Tta_raw = now.getTime() - (Jun_21_1998_noon_UTC - TAI_leap_milliseconds)) * Tta_per_ms * 1000) / 1000;
-  let Tta_round = Math.round(Tta_raw)
-  let Tta_dec = ((Tta_round % 100) + 100) % 100;
-  Tta = ((Tta_round - Tta_dec) / 100) + anchor_byte1;
+  let Tta_raw = Math.round(now.getTime() - (Jun_21_1998_noon_UTC - TAI_leap_milliseconds)) * Tta_per_ms * 1000) / 1000;
+  let Tta_dec = ((Tta_raw % 100) + 100) % 100;
+  Tta = ((Tta_raw - Tta_dec) / 100) + anchor_byte1;
 
   let Tta_hex1 = ((Tta % 16**4) + 16**4) % 16**4;
   Tta = ((Tta - Tta_hex1) / 16**4) + anchor_byte2;
@@ -68,7 +67,7 @@ function startTime() {
 	  + "  <small><italic>(+" + Tta_dec.toFixed(2) + "%)</italic></small></h1>"
 	  + " + " + (Tta_raw % 1000).toFixed(0) + " Pta" + " + " + (1000 * (Tta_raw % 1)).toFixed(0) + " Pta" + " + " + (Tta_raw).toFixed(3)
 	  + "<br /><br /><br />Your Local Time:<br />" + now;
-  setTimeout(startTime, 305);
+  setTimeout(startTime, 30);
 }
 </script>
 </body>
