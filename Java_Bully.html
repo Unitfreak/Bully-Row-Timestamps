@@ -22,7 +22,9 @@
         h1 {
             color: #666;    
         }
-
+	h3 {
+	    text-align: right;
+	}
         a {
             color: #0066cc;
             text-decoration: none;
@@ -31,9 +33,6 @@
         a:hover {
             text-decoration: underline;
         }
-	div.rightxt {
-	    text-align: right;
-	}
     </style>
 </head>
 
@@ -67,7 +66,7 @@ function startTime() {
 
   document.getElementById('txt').innerHTML =  "<h1>" + Tta_hex3.toString(16).toUpperCase().padStart(4, "0") + " " + Tta_hex2.toString(16).toUpperCase().padStart(4, "0") + " " + Tta_hex1.toString(16).toUpperCase().padStart(4, "0") 
 	  + "  <small>(+" + Tta_dec.toFixed(2) + "%)</small></h1>"
-	  + "<div class=\"rightxt\"> + " + (Tta_raw % 100).toFixed(0) + " Pta " + (Tta_raw % 1).toFixed(3).substring(2, 5) + " Tta </div>"
+	  + "<h3> + " + (Tta_raw % 100).toFixed(0) + " Pta " + (Tta_raw % 1).toFixed(3).substring(2, 5) + " Tta <h3>"
 	  + "<br /><br /><br />Your Local Time:<br />" + now;
   setTimeout(startTime, 30);
 }
