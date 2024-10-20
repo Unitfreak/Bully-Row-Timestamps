@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -35,38 +36,65 @@
 
 <body onload="startTime()">
 
-    <h2>Current Bully Row Timestamp:</h2>
+  <h2>Bully Timestamp:
 
-    <div id="txt"></div>
+  <select id="bullytime">
+    <option value="1">Current Time</option>
+    <option value="2">Time of Year</option>
+  </select>
 
-	<a href="https://bullyrow.eeyabo.net" style="padding-top: 15px;">Learn how it works!</a>
+  </h2>
 
-<script>
-function startTime() {
-  const now = new Date();
-  const Tta_per_ms = 1/30550;
-  const Jun_21_1998_noon_UTC = 898430400000;
-  const TAI_leap_milliseconds = 37000;
-  const anchor_byte3 = parseInt("8209", 16);
-  const anchor_byte2 = parseInt("2800", 16);
-  const anchor_byte1 = parseInt("0000", 16);
+  <div id="txt"></div>
+  <a href="https://bullyrow.eeyabo.net" style="padding-top: 15px;">Learn how it works!</a>
 
-  let Tta_raw = Math.round((now.getTime() - (Jun_21_1998_noon_UTC - TAI_leap_milliseconds)) * Tta_per_ms * 1000) / 1000;
-  let Tta_dec = ((Tta_raw % 100) + 100) % 100;
-  Tta = ((Tta_raw - Tta_dec) / 100) + anchor_byte1;
+  <script>
+  const bullysellect = document.getElementById("bullytime");
+  function startTime() {
+    const now = new Date();
+    const Pta_per_ms = 1/30550;
+    const Jun_21_1998_noon_UTC = 898430400000;
+    const TAI_leap_milliseconds = 37000;
+    const anchor_byte3 = parseInt("8209", 16);
+    const anchor_byte2 = parseInt("2800", 16);
+    const anchor_byte1 = parseInt("0000", 16);
 
-  let Tta_hex1 = ((Tta % 16**4) + 16**4) % 16**4;
-  Tta = ((Tta - Tta_hex1) / 16**4) + anchor_byte2;
+    let ms_raw = now.getTime();
+    let Pta_raw = Math.round((ms_raw - (Jun_21_1998_noon_UTC - TAI_leap_milliseconds)) * Pta_per_ms * 1000) / 1000;
+	let Tta_txt = Math.floor((Pta_raw * 1000) % 1000).toString().padStart(3, '0') + " Tta)";
 
-  let Tta_hex2 = ((Tta % 16**4) + 16**4) % 16**4;
-  let Tta_hex3 = ((Tta - Tta_hex2) / 16**4) + anchor_byte3;
+    if (bullysellect.value == 1) {
+      Zta_txt = "(+ ";
+      Eta_txt = "";
+      Pta_txt = Math.floor(Pta_raw % 100).toString().padStart(2, '0') + " Pta ";
+    }
 
-  document.getElementById('txt').innerHTML =  "<h1>" + Tta_hex3.toString(16).toUpperCase().padStart(4, "0") + " " + Tta_hex2.toString(16).toUpperCase().padStart(4, "0") + " " + Tta_hex1.toString(16).toUpperCase().padStart(4, "0")
-	  + "  <small>(+  "(Tta_raw % 100).toFixed(0) + " Pta " + (Tta_raw % 1).toFixed(3).substring(2, 5) + " Tta )</small></h1>"
-	  + "<br/>Your Local Time:<br />" + now;
-  setTimeout(startTime, 30);
-}
-</script>
+    if (bullysellect.value == 2) {
+	  const startOfYear = new Date(now.getFullYear(), 0, 1); // January 1st of the current year
+      Pta_year = Math.floor((ms_raw - startOfYear.getTime()) * Pta_per_ms / 100) * 100;
+      Zta_txt = "<br/>(+ ";
+      Eta_txt = Math.floor(Pta_year/10000 % 10000).toString().padStart(4, '0') + " Eta ";
+      Pta_txt = Math.floor(Pta_raw % 1000).toString().padStart(3, '0') + " Pta ";
+      Pta_raw = Pta_raw - Pta_year;
+	}
+
+    let Pta_dec = ((Pta_raw % 100) + 100) % 100;
+    Pta = ((Pta_raw - Pta_dec) / 100) + anchor_byte1;
+
+    let Pta_hex1 = ((Pta % 16**4) + 16**4) % 16**4;
+    Pta = ((Pta - Pta_hex1) / 16**4) + anchor_byte2;
+
+    let Pta_hex2 = ((Pta % 16**4) + 16**4) % 16**4;
+    let Pta_hex3 = ((Pta - Pta_hex2) / 16**4) + anchor_byte3;
+
+    document.getElementById('txt').innerHTML =  "<h1>" 
+        + Pta_hex3.toString(16).toUpperCase().padStart(4, "0") 
+        + " " + Pta_hex2.toString(16).toUpperCase().padStart(4, "0") 
+        + " " + Pta_hex1.toString(16).toUpperCase().padStart(4, "0")
+        + " <small>" + Zta_txt + Eta_txt + Pta_txt + Tta_txt
+        + "</small></h1> Your Local Time:<br />" + now;
+    setTimeout(startTime, 30);
+  }
+  </script>
 </body>
-
 </html>
