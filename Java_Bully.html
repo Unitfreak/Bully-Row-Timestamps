@@ -73,7 +73,7 @@
 	  const startOfYear = new Date(now.getFullYear(), 0, 1); // January 1st of the current year
       Pta_year = Math.floor((ms_raw - startOfYear.getTime()) * Pta_per_ms / 100) * 100;
       Zta_txt = "<br/>(+ ";
-      Eta_txt = Math.floor(Pta_year/10000 % 10000).toString().padStart(4, '0') + " Eta ";
+      Eta_txt = Math.floor(Pta_year/10000 % 1000).toString().padStart(4, '0') + " Eta ";
       Pta_txt = Math.floor(Pta_raw % 1000).toString().padStart(3, '0') + " Pta ";
       Pta_raw = Pta_raw - Pta_year;
 	}
