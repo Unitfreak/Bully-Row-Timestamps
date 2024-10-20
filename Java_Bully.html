@@ -65,7 +65,7 @@ function startTime() {
   let Tta_hex3 = ((Tta - Tta_hex2) / 16**4) + anchor_byte3;
 
   document.getElementById('txt').innerHTML =  "<h1>" + Tta_hex3.toString(16).toUpperCase().padStart(4, "0") + " " + Tta_hex2.toString(16).toUpperCase().padStart(4, "0") + " " + Tta_hex1.toString(16).toUpperCase().padStart(4, "0") 
-	  + "  <small>(+" + Tta_dec.toFixed(2) + "%"
+	  + "<br/><small>(+" + Tta_dec.toFixed(2) + "%"
 	  + "  =  " + (Tta_raw % 100).toFixed(0) + " Pta " + (Tta_raw % 1).toFixed(3).substring(2, 5) + " Tta )</small></h1>"
 	  + "<br /><br /><br />Your Local Time:<br />" + now;
   setTimeout(startTime, 30);
