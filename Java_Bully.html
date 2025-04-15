@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -39,8 +38,11 @@
   <h2>Bully Timestamp:
 
   <select id="bullytime">
-    <option value="1">Current Time</option>
-    <option value="2">Time of Year</option>
+    <option value="1">+ Seconds</option>
+    <option value="2">+ Percent</option>
+    <option value="3">+ Timepan</option>
+    <option value="4">+ Hex</option>
+
   </select>
 
   </h2>
@@ -60,23 +62,28 @@
     const anchor_byte1 = parseInt("0000", 16);
 
     let ms_raw = now.getTime();
-    let Pta_raw = Math.round((ms_raw - (Jun_21_1998_noon_UTC - TAI_leap_milliseconds)) * Pta_per_ms * 1000) / 1000;
-	let Tta_txt = Math.floor((Pta_raw * 1000) % 1000).toString().padStart(3, '0') + " Tta)";
+    let ms_fix = (ms_raw - (Jun_21_1998_noon_UTC - TAI_leap_milliseconds));
+    let Pta_raw = Math.round(ms_fix * Pta_per_ms * 1000) / 1000;
 
     if (bullysellect.value == 1) {
-      Zta_txt = "(+ ";
-      Eta_txt = "";
-      Pta_txt = Math.floor(Pta_raw % 100).toString().padStart(2, '0') + " Pta ";
+	  Tta_txt = Math.floor((ms_fix / 100) % 10).toString().padStart(1, '0') + " sec)";
+      Pta_txt = Math.floor((ms_fix / 1000) % 3055).toString().padStart(1, '0') + ".";
     }
 
     if (bullysellect.value == 2) {
-	  const startOfYear = new Date(now.getFullYear(), 0, 1); // January 1st of the current year
-      Pta_year = Math.floor((ms_raw - startOfYear.getTime()) * Pta_per_ms / 100) * 100;
-      Zta_txt = "<br/>(+ ";
-      Eta_txt = Math.floor(Pta_year/1000 % 10000).toString().padStart(4, '0') + " Eta ";
-      Pta_txt = Math.floor(Pta_raw % 1000).toString().padStart(3, '0') + " Pta ";
-      Pta_raw = Pta_raw - Pta_year;
-	}
+	  Tta_txt = Math.floor((Pta_raw * 1000) % 1000).toString().padStart(3, '0') + " %)";
+      Pta_txt = Math.floor(Pta_raw % 100).toString().padStart(2, '0') + ".";
+    }
+
+    if (bullysellect.value == 3) {
+	  Tta_txt = Math.floor((Pta_raw * 1000) % 1000).toString().padStart(3, '0') + " Tta)";
+      Pta_txt = Math.floor(Pta_raw % 100).toString().padStart(2, '0') + " Pta ";
+    }
+
+    if (bullysellect.value == 4) {
+	  Tta_txt = Math.floor(((Pta_raw / 100) * 16**4) %16**4).toString(16).toUpperCase().padStart(4, '0') + " hex)";
+      Pta_txt = "";
+    }
 
     let Pta_dec = ((Pta_raw % 100) + 100) % 100;
     Pta = ((Pta_raw - Pta_dec) / 100) + anchor_byte1;
@@ -91,7 +98,7 @@
         + Pta_hex3.toString(16).toUpperCase().padStart(4, "0") 
         + " " + Pta_hex2.toString(16).toUpperCase().padStart(4, "0") 
         + " " + Pta_hex1.toString(16).toUpperCase().padStart(4, "0")
-        + " <small>" + Zta_txt + Eta_txt + Pta_txt + Tta_txt
+        + " <small>(+ " + Pta_txt + Tta_txt
         + "</small></h1> Your Local Time:<br />" + now;
     setTimeout(startTime, 30);
   }
