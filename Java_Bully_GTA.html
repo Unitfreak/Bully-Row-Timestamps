@@ -1,1 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 80vh;
+            margin: 0;
+            padding: 0;
+            flex-direction: column;
+        }
 
+        h2 {
+            color: #444;
+        }
+
+        h1 {
+            color: #666;    
+        }
+        a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body onload="startTime()">
+
+  <h2>Bully Timestamp:
+
+  <select id="bullytime">
+    <option value="1">+ Seconds</option>
+    <option value="2">+ Percent</option>
+    <option value="3">+ Timepan</option>
+    <option value="4">+ Hex</option>
+
+  </select>
+
+  </h2>
+
+  <div id="txt"></div>
+  <a href="https://en.m.wikiversity.org/wiki/Bully_Timestamps" style="padding-top: 15px;">Learn how it works!</a>
+	
+  <script>
+  const bullysellect = document.getElementById("bullytime");
+  function startTime() {
+    const now = new Date();
+    const Pta_per_ms = 1/30550;
+    const Jun_21_1998_noon_UTC = 898430400000;
+    const TAI_leap_milliseconds = 37000;
+    const anchor_byte3 = parseInt("8209", 16);
+    const anchor_byte2 = parseInt("2800", 16);
+    const anchor_byte1 = parseInt("0000", 16);
+
+    let ms_raw = now.getTime();
+    let ms_fix = (ms_raw - (Jun_21_1998_noon_UTC - TAI_leap_milliseconds));
+    let Pta_raw = Math.round(ms_fix * Pta_per_ms * 1000) / 1000;
+
+    if (bullysellect.value == 1) {
+	  Tta_txt = Math.floor((ms_fix / 100) % 10).toString().padStart(1, '0') + " sec)";
+      Pta_txt = Math.floor((ms_fix / 1000) % 3055).toString().padStart(1, '0') + ".";
+    }
+
+    if (bullysellect.value == 2) {
+	  Tta_txt = Math.floor((Pta_raw * 1000) % 1000).toString().padStart(3, '0') + " %)";
+      Pta_txt = Math.floor(Pta_raw % 100).toString().padStart(2, '0') + ".";
+    }
+
+    if (bullysellect.value == 3) {
+	  Tta_txt = Math.floor((Pta_raw * 1000) % 1000).toString().padStart(3, '0') + " Tta)";
+      Pta_txt = Math.floor(Pta_raw % 100).toString().padStart(2, '0') + " Pta ";
+    }
+
+    if (bullysellect.value == 4) {
+	  Tta_txt = Math.floor(((Pta_raw / 100) * 16**4) %16**4).toString(16).toUpperCase().padStart(4, '0') + " hex)";
+      Pta_txt = "";
+    }
+
+    let Pta_dec = ((Pta_raw % 100) + 100) % 100;
+    Pta = ((Pta_raw - Pta_dec) / 100) + anchor_byte1;
+
+    let Pta_hex1 = ((Pta % 16**4) + 16**4) % 16**4;
+    Pta = ((Pta - Pta_hex1) / 16**4) + anchor_byte2;
+
+    let Pta_hex2 = ((Pta % 16**4) + 16**4) % 16**4;
+    let Pta_hex3 = ((Pta - Pta_hex2) / 16**4) + anchor_byte3;
+
+    document.getElementById('txt').innerHTML =  "<h1>" 
+        + Pta_hex3.toString(16).toUpperCase().padStart(4, "0") 
+        + " " + Pta_hex2.toString(16).toUpperCase().padStart(4, "0") 
+        + " " + Pta_hex1.toString(16).toUpperCase().padStart(4, "0")
+        + " <small>(+ " + Pta_txt + Tta_txt
+        + "</small></h1> Your Local Time:<br />" + now;
+    setTimeout(startTime, 30);
+  }
+  </script>
+</body>
+</html>
