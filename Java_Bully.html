@@ -20,7 +20,7 @@
         }
 
         h1 {
-            color: #666;    
+            color: #666;
         }
         a {
             color: #0066cc;
@@ -30,10 +30,27 @@
         a:hover {
             text-decoration: underline;
         }
+
+        .timezone-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .timezone-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .timezone-item label {
+            margin-right: 10px;
+        }
     </style>
 </head>
 
-<body onload="startTime()">
+<body onload="initTimestamps()">
 
   <h2>Bully Timestamp:
 
@@ -42,17 +59,86 @@
     <option value="2">+ Percent</option>
     <option value="3">+ Timepan</option>
     <option value="4">+ Hex</option>
-
   </select>
 
   </h2>
 
-  <div id="txt"></div>
+  <div id="txt">Calculating...</div>
+  
+  <div class="timezone-container">
+      <h3>Compare Timezones:</h3>
+      <div id="timezone-displays"></div>
+  </div>
+  
   <a href="https://en.m.wikiversity.org/wiki/Bully_Timestamps" style="padding-top: 15px;">Learn how it works!</a>
 	
   <script>
   const bullysellect = document.getElementById("bullytime");
-  function startTime() {
+  
+  const timezones = [
+      { id: "tz-1", name: "Time Zone 1", default: "America/New_York" },
+      { id: "tz-2", name: "Time Zone 2", default: "Europe/London" },
+      { id: "tz-3", name: "Time Zone 3", default: "Asia/Tokyo" },
+      { id: "tz-4", name: "Time Zone 4", default: "Australia/Sydney" }
+  ];
+
+  const fullTimeZoneList = [
+      "America/New_York", "America/Los_Angeles", "America/Chicago",
+      "Europe/London", "Europe/Paris", "Europe/Berlin",
+      "Asia/Tokyo", "Asia/Shanghai", "Asia/Dubai",
+      "Australia/Sydney", "Australia/Perth", "Pacific/Auckland",
+      "UTC"
+  ];
+
+  // Custom function to format a Date object with both date and time
+  function formatTimeWithDate(date, timezone) {
+    const options = {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      timeZone: timezone
+    };
+    return date.toLocaleString('en-US', options);
+  }
+  
+  function createTimeZoneSelectors() {
+    const container = document.getElementById('timezone-displays');
+    timezones.forEach(tz => {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'timezone-item';
+        
+        const label = document.createElement('label');
+        label.textContent = tz.name + ":";
+        
+        const select = document.createElement('select');
+        select.id = `select-${tz.id}`;
+        
+        fullTimeZoneList.forEach(zone => {
+            const option = document.createElement('option');
+            option.value = zone;
+            option.textContent = zone;
+            if (zone === tz.default) {
+                option.selected = true;
+            }
+            select.appendChild(option);
+        });
+
+        const displayDiv = document.createElement('div');
+        displayDiv.id = `display-${tz.id}`;
+        displayDiv.style.marginLeft = '10px';
+        displayDiv.textContent = 'Loading...';
+        
+        itemDiv.appendChild(label);
+        itemDiv.appendChild(select);
+        itemDiv.appendChild(displayDiv);
+        container.appendChild(itemDiv);
+    });
+  }
+  
+  function updateTimestamps() {
     const now = new Date();
     const Pta_per_ms = 1/30550;
     const Jun_21_1998_noon_UTC = 898430400000;
@@ -65,23 +151,26 @@
     let ms_fix = (ms_raw - (Jun_21_1998_noon_UTC - TAI_leap_milliseconds));
     let Pta_raw = Math.round(ms_fix * Pta_per_ms * 1000) / 1000;
 
+    let Tta_txt = "";
+    let Pta_txt = "";
+
     if (bullysellect.value == 1) {
-	  Tta_txt = Math.floor((ms_fix / 100) % 10).toString().padStart(1, '0') + " sec)";
+	    Tta_txt = Math.floor((ms_fix / 100) % 10).toString().padStart(1, '0') + " sec)";
       Pta_txt = Math.floor((ms_fix / 1000) % 3055).toString().padStart(1, '0') + ".";
     }
 
     if (bullysellect.value == 2) {
-	  Tta_txt = Math.floor((Pta_raw * 1000) % 1000).toString().padStart(3, '0') + " %)";
+	    Tta_txt = Math.floor((Pta_raw * 1000) % 1000).toString().padStart(3, '0') + " %)";
       Pta_txt = Math.floor(Pta_raw % 100).toString().padStart(2, '0') + ".";
     }
 
     if (bullysellect.value == 3) {
-	  Tta_txt = Math.floor((Pta_raw * 1000) % 1000).toString().padStart(3, '0') + " Tta)";
+	    Tta_txt = Math.floor((Pta_raw * 1000) % 1000).toString().padStart(3, '0') + " Tta)";
       Pta_txt = Math.floor(Pta_raw % 100).toString().padStart(2, '0') + " Pta ";
     }
 
     if (bullysellect.value == 4) {
-	  Tta_txt = Math.floor(((Pta_raw / 100) * 16**4) %16**4).toString(16).toUpperCase().padStart(4, '0') + " hex)";
+	    Tta_txt = Math.floor(((Pta_raw / 100) * 16**4) %16**4).toString(16).toUpperCase().padStart(4, '0') + " hex)";
       Pta_txt = "";
     }
 
@@ -99,8 +188,22 @@
         + " " + Pta_hex2.toString(16).toUpperCase().padStart(4, "0") 
         + " " + Pta_hex1.toString(16).toUpperCase().padStart(4, "0")
         + " <small>(+ " + Pta_txt + Tta_txt
-        + "</small></h1> Your Local Time:<br />" + now;
-    setTimeout(startTime, 30);
+        + "</small></h1>";
+
+    // Update each user-selected time zone
+    timezones.forEach(tz => {
+        const select = document.getElementById(`select-${tz.id}`);
+        const display = document.getElementById(`display-${tz.id}`);
+        const selectedTimezone = select.value;
+        display.textContent = formatTimeWithDate(now, selectedTimezone);
+    });
+    
+    setTimeout(updateTimestamps, 30);
+  }
+  
+  function initTimestamps() {
+    createTimeZoneSelectors();
+    updateTimestamps();
   }
   </script>
 </body>
