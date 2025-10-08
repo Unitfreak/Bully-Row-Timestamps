@@ -30,27 +30,10 @@
         a:hover {
             text-decoration: underline;
         }
-
-        .timezone-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-top: 20px;
-        }
-
-        .timezone-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        
-        .timezone-item label {
-            margin-right: 10px;
-        }
     </style>
 </head>
 
-<body onload="initTimestamps()">
+<body onload="startTime()">
 
   <h2>Bully Timestamp:
 
@@ -59,199 +42,51 @@
     <option value="2">+ Percent</option>
     <option value="3">+ Timepan</option>
     <option value="4">+ Hex</option>
+
   </select>
 
   </h2>
-  <div id="txt">Fetching server time and leap seconds...</div>
-  
-  <div class="timezone-container">
-      <h3>Compare Timezones:</h3>
-      <div id="timezone-displays"></div>
-  </div>
-  
+
+  <div id="txt"></div>
   <a href="https://en.m.wikiversity.org/wiki/Bully_Timestamps" style="padding-top: 15px;">Learn how it works!</a>
-  
+	
   <script>
-  let serverTimeOffset = 0;
-  let lastKnownServerTime = null;
-  let TAI_leap_milliseconds = 37000; // Default value, will be updated
   const bullysellect = document.getElementById("bullytime");
-  
-  const timezones = [
-      { id: "tz-1", name: "Time Zone 1", default: "America/New_York" },
-      { id: "tz-2", name: "Time Zone 2", default: "Europe/London" },
-      { id: "tz-3", name: "Time Zone 3", default: "Asia/Tokyo" },
-      { id: "tz-4", name: "Time Zone 4", default: "Australia/Sydney" }
-  ];
-
-  const fullTimeZoneList = [
-      "America/New_York", "America/Los_Angeles", "America/Chicago",
-      "Europe/London", "Europe/Paris", "Europe/Berlin",
-      "Asia/Tokyo", "Asia/Shanghai", "Asia/Dubai",
-      "Australia/Sydney", "Australia/Perth", "Pacific/Auckland"
-  ];
-
-  // Fetches the server time from the USNO's time server (more reliable)
-  async function fetchServerTime() {
-    const usnoApiUrl = 'https://tycho.usno.navy.mil/cgi-bin/time.pl';
-
-    try {
-      const response = await fetch(usnoApiUrl);
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      const text = await response.text();
-      const match = text.match(/<pre>\s*(\w+\s+\d{1,2},\s+\d{4}\s+\d{2}:\d{2}:\d{2})\s+UTC/);
-      if (match) {
-        const serverTime = new Date(`${match[1]} UTC`);
-        serverTimeOffset = serverTime.getTime() - new Date().getTime();
-        lastKnownServerTime = serverTime;
-        return;
-      }
-    } catch (error) {
-      console.error('Failed to fetch server time:', error);
-    }
-    // Fallback to worldtimeapi if USNO fails
-    const worldTimeApiUrl = 'http://worldtimeapi.org/api/timezone/Etc/UTC';
-    try {
-        const response = await fetch(worldTimeApiUrl);
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        const data = await response.json();
-        const serverTime = new Date(data.utc_datetime);
-        serverTimeOffset = serverTime.getTime() - new Date().getTime();
-        lastKnownServerTime = serverTime;
-    } catch (error) {
-        console.error('Failed to fetch server time from fallback:', error);
-    }
-  }
-
-  // Fetches the current leap seconds from the IERS server
-  async function fetchLeapSeconds() {
-      const leapSecondsApiUrl = 'https://maia.usno.navy.mil/serials/finals2000A.all';
-      try {
-          const response = await fetch(leapSecondsApiUrl);
-          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-          const text = await response.text();
-          
-          const lines = text.split('\n');
-          let latestLeapSecond = 0;
-          
-          for (let i = lines.length - 1; i >= 0; i--) {
-              const line = lines[i].trim();
-              const parts = line.split(/\s+/);
-              // Corrected parsing: look for TAI-UTC entry near end of file
-              if (line.includes("TAI-UTC")) {
-                  const latestVal = parseFloat(parts[parts.length - 1]);
-                  if (!isNaN(latestVal)) {
-                      latestLeapSecond = latestVal;
-                      TAI_leap_milliseconds = latestLeapSecond * 1000;
-                      break;
-                  }
-              }
-          }
-          console.log("Fetched leap seconds:", TAI_leap_milliseconds / 1000);
-      } catch (error) {
-          console.error('Failed to fetch leap seconds:', error);
-      }
-  }
-
-  // Custom function to format a Date object with both date and time
-  function formatTimeWithDate(date, timezone) {
-    const options = {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      timeZone: timezone
-    };
-    return date.toLocaleString('en-US', options);
-  }
-
-  function createTimeZoneSelectors() {
-    const container = document.getElementById('timezone-displays');
-    timezones.forEach(tz => {
-        const itemDiv = document.createElement('div');
-        itemDiv.className = 'timezone-item';
-        
-        const label = document.createElement('label');
-        label.textContent = tz.name + ":";
-        
-        const select = document.createElement('select');
-        select.id = `select-${tz.id}`;
-        
-        fullTimeZoneList.forEach(zone => {
-            const option = document.createElement('option');
-            option.value = zone;
-            option.textContent = zone;
-            if (zone === tz.default) {
-                option.selected = true;
-            }
-            select.appendChild(option);
-        });
-
-        const displayDiv = document.createElement('div');
-        displayDiv.id = `display-${tz.id}`;
-        displayDiv.style.marginLeft = '10px';
-        displayDiv.textContent = 'Loading...';
-        
-        itemDiv.appendChild(label);
-        itemDiv.appendChild(select);
-        itemDiv.appendChild(displayDiv);
-        container.appendChild(itemDiv);
-    });
-  }
-
-  // Calculates and displays the timestamps
-  function updateTimestamps() {
+  function startTime() {
     const now = new Date();
-    
-    // Calculate server time based on the last known offset
-    const accurateServerTime = new Date(now.getTime() + serverTimeOffset);
-    
-    // Check if server time was successfully fetched
-    if (!lastKnownServerTime) {
-      document.getElementById('txt').innerHTML = "<h1>Failed to fetch server time.</h1>";
-      timezones.forEach(tz => {
-          document.getElementById(`display-${tz.id}`).textContent = "Failed to load.";
-      });
-      return;
-    }
-
-    const Pta_per_ms = 1 / 30550;
+    const Pta_per_ms = 1/30550;
     const Jun_21_1998_noon_UTC = 898430400000;
+    const TAI_leap_milliseconds = 37000;
     const anchor_byte3 = parseInt("8209", 16);
     const anchor_byte2 = parseInt("2800", 16);
     const anchor_byte1 = parseInt("0000", 16);
 
-    let ms_raw = accurateServerTime.getTime();
+    let ms_raw = now.getTime();
     let ms_fix = (ms_raw - (Jun_21_1998_noon_UTC - TAI_leap_milliseconds));
     let Pta_raw = Math.round(ms_fix * Pta_per_ms * 1000) / 1000;
 
-    let Tta_txt = "";
-    let Pta_txt = "";
-
     if (bullysellect.value == 1) {
-        Tta_txt = Math.floor((ms_fix / 100) % 10).toString().padStart(1, '0') + " sec)";
-        Pta_txt = Math.floor((ms_fix / 1000) % 3055).toString().padStart(1, '0') + ".";
+	  Tta_txt = Math.floor((ms_fix / 100) % 10).toString().padStart(1, '0') + " sec)";
+      Pta_txt = Math.floor((ms_fix / 1000) % 3055).toString().padStart(1, '0') + ".";
     }
 
     if (bullysellect.value == 2) {
-        Tta_txt = Math.floor((Pta_raw * 1000) % 1000).toString().padStart(3, '0') + " %)";
-        Pta_txt = Math.floor(Pta_raw % 100).toString().padStart(2, '0') + ".";
+	  Tta_txt = Math.floor((Pta_raw * 1000) % 1000).toString().padStart(3, '0') + " %)";
+      Pta_txt = Math.floor(Pta_raw % 100).toString().padStart(2, '0') + ".";
     }
 
     if (bullysellect.value == 3) {
-        Tta_txt = Math.floor((Pta_raw * 1000) % 1000).toString().padStart(3, '0') + " Tta)";
-        Pta_txt = Math.floor(Pta_raw % 100).toString().padStart(2, '0') + " Pta ";
+	  Tta_txt = Math.floor((Pta_raw * 1000) % 1000).toString().padStart(3, '0') + " Tta)";
+      Pta_txt = Math.floor(Pta_raw % 100).toString().padStart(2, '0') + " Pta ";
     }
 
     if (bullysellect.value == 4) {
-        Tta_txt = Math.floor(((Pta_raw / 100) * 16**4) % 16**4).toString(16).toUpperCase().padStart(4, '0') + " hex)";
-        Pta_txt = "";
+	  Tta_txt = Math.floor(((Pta_raw / 100) * 16**4) %16**4).toString(16).toUpperCase().padStart(4, '0') + " hex)";
+      Pta_txt = "";
     }
 
     let Pta_dec = ((Pta_raw % 100) + 100) % 100;
-    let Pta = ((Pta_raw - Pta_dec) / 100) + anchor_byte1;
+    Pta = ((Pta_raw - Pta_dec) / 100) + anchor_byte1;
 
     let Pta_hex1 = ((Pta % 16**4) + 16**4) % 16**4;
     Pta = ((Pta - Pta_hex1) / 16**4) + anchor_byte2;
@@ -259,38 +94,14 @@
     let Pta_hex2 = ((Pta % 16**4) + 16**4) % 16**4;
     let Pta_hex3 = ((Pta - Pta_hex2) / 16**4) + anchor_byte3;
 
-    document.getElementById('txt').innerHTML = "<h1>" 
+    document.getElementById('txt').innerHTML =  "<h1>" 
         + Pta_hex3.toString(16).toUpperCase().padStart(4, "0") 
         + " " + Pta_hex2.toString(16).toUpperCase().padStart(4, "0") 
         + " " + Pta_hex1.toString(16).toUpperCase().padStart(4, "0")
         + " <small>(+ " + Pta_txt + Tta_txt
-        + "</small></h1>";
-
-    // Update each user-selected time zone
-    timezones.forEach(tz => {
-        const select = document.getElementById(`select-${tz.id}`);
-        const display = document.getElementById(`display-${tz.id}`);
-        const selectedTimezone = select.value;
-        display.textContent = formatTimeWithDate(now, selectedTimezone);
-    });
+        + "</small></h1> Your Local Time:<br />" + now;
+    setTimeout(startTime, 30);
   }
-
-  // Initialize and start the update loop
-  async function initTimestamps() {
-    createTimeZoneSelectors();
-    await fetchServerTime();
-    await fetchLeapSeconds();
-    updateTimestamps(); // Initial display
-    setInterval(updateTimes, 30); // Use a faster interval for precision
-    // Re-fetch the server time occasionally to correct for drift
-    setInterval(fetchServerTime, 60 * 60 * 1000); // Re-sync every hour
-    setInterval(fetchLeapSeconds, 24 * 60 * 60 * 1000); // Re-fetch leap seconds daily
-  }
-  
-  function updateTimes() {
-    updateTimestamps();
-  }
-  
   </script>
 </body>
 </html>
