@@ -75,6 +75,9 @@
   <script>
   const bullysellect = document.getElementById("bullytime");
   
+  const TAI_UTC_OFFSET_SECONDS = 37; // Current hardcoded offset
+  const TT_TAI_OFFSET_SECONDS = 32.184; // Constant offset between TT and TAI
+  
   const timezones = [
       { id: "tz-1", name: "Time Zone 1", default: "America/New_York" },
       { id: "tz-2", name: "Time Zone 2", default: "Europe/London" },
@@ -83,11 +86,21 @@
   ];
 
   const fullTimeZoneList = [
-      "America/New_York", "America/Los_Angeles", "America/Chicago",
-      "Europe/London", "Europe/Paris", "Europe/Berlin",
-      "Asia/Tokyo", "Asia/Shanghai", "Asia/Dubai",
-      "Australia/Sydney", "Australia/Perth", "Pacific/Auckland",
-      "UTC"
+      {value: "America/New_York", label: "America/New_York"},
+      {value: "America/Los_Angeles", label: "America/Los_Angeles"},
+      {value: "America/Chicago", label: "America/Chicago"},
+      {value: "Europe/London", label: "Europe/London"},
+      {value: "Europe/Paris", label: "Europe/Paris"},
+      {value: "Europe/Berlin", label: "Europe/Berlin"},
+      {value: "Asia/Tokyo", label: "Asia/Tokyo"},
+      {value: "Asia/Shanghai", label: "Asia/Shanghai"},
+      {value: "Asia/Dubai", label: "Asia/Dubai"},
+      {value: "Australia/Sydney", label: "Australia/Sydney"},
+      {value: "Australia/Perth", label: "Australia/Perth"},
+      {value: "Pacific/Auckland", label: "Pacific/Auckland"},
+      {value: "UTC", label: "UTC"},
+      {value: "TAI", label: "International Atomic Time"},
+      {value: "TT", label: "Terrestrial Time"}
   ];
 
   // Custom function to format a Date object with both date and time
@@ -118,9 +131,9 @@
         
         fullTimeZoneList.forEach(zone => {
             const option = document.createElement('option');
-            option.value = zone;
-            option.textContent = zone;
-            if (zone === tz.default) {
+            option.value = zone.value;
+            option.textContent = zone.label;
+            if (zone.value === tz.default) {
                 option.selected = true;
             }
             select.appendChild(option);
@@ -142,7 +155,7 @@
     const now = new Date();
     const Pta_per_ms = 1/30550;
     const Jun_21_1998_noon_UTC = 898430400000;
-    const TAI_leap_milliseconds = 37000;
+    const TAI_leap_milliseconds = 37000; // Hardcoded, as per original version
     const anchor_byte3 = parseInt("8209", 16);
     const anchor_byte2 = parseInt("2800", 16);
     const anchor_byte1 = parseInt("0000", 16);
@@ -195,7 +208,17 @@
         const select = document.getElementById(`select-${tz.id}`);
         const display = document.getElementById(`display-${tz.id}`);
         const selectedTimezone = select.value;
-        display.textContent = formatTimeWithDate(now, selectedTimezone);
+
+        if (selectedTimezone === 'TAI') {
+            const taiTime = new Date(now.getTime() + TAI_UTC_OFFSET_SECONDS * 1000);
+            display.textContent = `${formatTimeWithDate(taiTime, 'UTC')} (TAI)`;
+        } else if (selectedTimezone === 'TT') {
+            const taiTime = new Date(now.getTime() + TAI_UTC_OFFSET_SECONDS * 1000);
+            const ttTime = new Date(taiTime.getTime() + TT_TAI_OFFSET_SECONDS * 1000);
+            display.textContent = `${formatTimeWithDate(ttTime, 'UTC')} (TT)`;
+        } else {
+            display.textContent = formatTimeWithDate(now, selectedTimezone);
+        }
     });
     
     setTimeout(updateTimestamps, 30);
