@@ -47,6 +47,11 @@
         .timezone-item label {
             margin-right: 10px;
         }
+        
+        #user-time-input {
+            step="1"
+            display: none; /* Hidden by default */
+        }
     </style>
 </head>
 
@@ -61,10 +66,16 @@
     <option value="4">+ Hex</option>
   </select>
 
+  <select id="time-mode-select">
+    <option value="current">Current Time</option>
+    <option value="user-selected">User Selected Time</option>
+  </select>
+
   </h2>
 
   <div id="txt">Calculating...</div>
-  
+  <input type="datetime-local" id="user-time-input" step="1">
+
   <div class="timezone-container">
       <h3>Compare Timezones:</h3>
       <div id="timezone-displays"></div>
@@ -74,7 +85,10 @@
 	
   <script>
   const bullysellect = document.getElementById("bullytime");
-  
+  const timeModeSelect = document.getElementById("time-mode-select");
+  const userTimeInput = document.getElementById("user-time-input");
+  let timerId = null;
+
   const TAI_UTC_OFFSET_SECONDS = 37; // Current hardcoded offset
   const TT_TAI_OFFSET_SECONDS = 32.184; // Constant offset between TT and TAI
   
@@ -152,7 +166,19 @@
   }
   
   function updateTimestamps() {
-    const now = new Date();
+    let now;
+    if (timeModeSelect.value === "current") {
+        now = new Date();
+    } else {
+        const userTimeValue = userTimeInput.value;
+        if (userTimeValue) {
+            now = new Date(userTimeValue);
+        } else {
+            // If user input is empty, default to current time for display
+            now = new Date(); 
+        }
+    }
+
     const Pta_per_ms = 1/30550;
     const Jun_21_1998_noon_UTC = 898430400000;
     const TAI_leap_milliseconds = 37000; // Hardcoded, as per original version
@@ -220,14 +246,69 @@
             display.textContent = formatTimeWithDate(now, selectedTimezone);
         }
     });
-    
-    setTimeout(updateTimestamps, 30);
+
+    if (timeModeSelect.value === "current") {
+        timerId = setTimeout(updateTimestamps, 30);
+    }
+  }
+
+  function handleTimeModeChange() {
+      if (timeModeSelect.value === "user-selected") {
+          userTimeInput.style.display = "block";
+          if (timerId) {
+              clearTimeout(timerId);
+          }
+          updateTimestamps();
+      } else {
+          userTimeInput.style.display = "none";
+          updateTimestamps();
+      }
   }
   
   function initTimestamps() {
     createTimeZoneSelectors();
     updateTimestamps();
+
+    // Event listeners
+    timeModeSelect.addEventListener('change', handleTimeModeChange);
+    userTimeInput.addEventListener('change', updateTimestamps);
+    bullysellect.addEventListener('change', updateTimestamps);
   }
+
+  function createTimeZoneSelectors() {
+    const container = document.getElementById('timezone-displays');
+    timezones.forEach(tz => {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'timezone-item';
+        
+        const label = document.createElement('label');
+        label.textContent = tz.name + ":";
+        
+        const select = document.createElement('select');
+        select.id = `select-${tz.id}`;
+        
+        fullTimeZoneList.forEach(zone => {
+            const option = document.createElement('option');
+            option.value = zone.value;
+            option.textContent = zone.label;
+            if (zone.value === tz.default) {
+                option.selected = true;
+            }
+            select.appendChild(option);
+        });
+
+        const displayDiv = document.createElement('div');
+        displayDiv.id = `display-${tz.id}`;
+        displayDiv.style.marginLeft = '10px';
+        displayDiv.textContent = 'Loading...';
+        
+        itemDiv.appendChild(label);
+        itemDiv.appendChild(select);
+        itemDiv.appendChild(displayDiv);
+        container.appendChild(itemDiv);
+    });
+  }
+
   </script>
 </body>
 </html>
