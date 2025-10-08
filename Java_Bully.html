@@ -91,22 +91,38 @@
       "Australia/Sydney", "Australia/Perth", "Pacific/Auckland"
   ];
 
-  // Fetches the server time and calculates the offset
+  // Fetches the server time from the USNO's time server (more reliable)
   async function fetchServerTime() {
-    const apiURL = 'http://worldtimeapi.org/api/timezone/Etc/UTC';
+    const usnoApiUrl = 'https://tycho.usno.navy.mil/cgi-bin/time.pl';
 
     try {
-      const response = await fetch(apiURL);
+      const response = await fetch(usnoApiUrl);
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      const data = await response.json();
-      const serverTime = new Date(data.utc_datetime);
-      serverTimeOffset = serverTime.getTime() - new Date().getTime();
-      lastKnownServerTime = serverTime;
+      const text = await response.text();
+      const match = text.match(/<pre>\s*(\w+\s+\d{1,2},\s+\d{4}\s+\d{2}:\d{2}:\d{2})\s+UTC/);
+      if (match) {
+        const serverTime = new Date(`${match[1]} UTC`);
+        serverTimeOffset = serverTime.getTime() - new Date().getTime();
+        lastKnownServerTime = serverTime;
+        return;
+      }
     } catch (error) {
       console.error('Failed to fetch server time:', error);
     }
+    // Fallback to worldtimeapi if USNO fails
+    const worldTimeApiUrl = 'http://worldtimeapi.org/api/timezone/Etc/UTC';
+    try {
+        const response = await fetch(worldTimeApiUrl);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const data = await response.json();
+        const serverTime = new Date(data.utc_datetime);
+        serverTimeOffset = serverTime.getTime() - new Date().getTime();
+        lastKnownServerTime = serverTime;
+    } catch (error) {
+        console.error('Failed to fetch server time from fallback:', error);
+    }
   }
-  
+
   // Fetches the current leap seconds from the IERS server
   async function fetchLeapSeconds() {
       const leapSecondsApiUrl = 'https://maia.usno.navy.mil/serials/finals2000A.all';
@@ -121,11 +137,14 @@
           for (let i = lines.length - 1; i >= 0; i--) {
               const line = lines[i].trim();
               const parts = line.split(/\s+/);
-              // The format has changed over time, search for TAI-UTC and a number
-              if (parts.length >= 7 && parts[6] === "TAI-UTC" && !isNaN(parseFloat(parts[7]))) {
-                  latestLeapSecond = parseFloat(parts[7]);
-                  TAI_leap_milliseconds = latestLeapSecond * 1000;
-                  break;
+              // Corrected parsing: look for TAI-UTC entry near end of file
+              if (line.includes("TAI-UTC")) {
+                  const latestVal = parseFloat(parts[parts.length - 1]);
+                  if (!isNaN(latestVal)) {
+                      latestLeapSecond = latestVal;
+                      TAI_leap_milliseconds = latestLeapSecond * 1000;
+                      break;
+                  }
               }
           }
           console.log("Fetched leap seconds:", TAI_leap_milliseconds / 1000);
