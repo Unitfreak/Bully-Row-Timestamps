@@ -49,7 +49,6 @@
         }
         
         #user-time-input {
-            step="1"
             display: none; /* Hidden by default */
         }
     </style>
@@ -74,7 +73,7 @@
   </h2>
 
   <div id="txt">Calculating...</div>
-  <input type="datetime-local" id="user-time-input" step="1">
+  <input type="datetime-local" id="user-time-input" step="0.1">
 
   <div class="timezone-container">
       <h3>Compare Timezones:</h3>
@@ -87,10 +86,145 @@
   const bullysellect = document.getElementById("bullytime");
   const timeModeSelect = document.getElementById("time-mode-select");
   const userTimeInput = document.getElementById("user-time-input");
-  let timerId = null;
+  let animationFrameId = null; // Use for requestAnimationFrame
+  const TT_TAI_OFFSET_MILLISECONDS = 32184; // Constant offset between TT and TAI
+  const leapSeconds = [
+   new Date("1972-01-01T00:00:01Z"),
+   new Date("1972-07-01T00:00:01Z"),
+   new Date("1973-01-01T00:00:01Z"),
+   new Date("1974-01-01T00:00:01Z"),
+   new Date("1975-01-01T00:00:01Z"),
+   new Date("1976-01-01T00:00:01Z"),
+   new Date("1977-01-01T00:00:01Z"),
+   new Date("1978-01-01T00:00:01Z"),
+   new Date("1979-01-01T00:00:01Z"),
+   new Date("1980-01-01T00:00:01Z"),
+   new Date("1981-07-01T00:00:01Z"),
+   new Date("1982-07-01T00:00:01Z"),
+   new Date("1983-07-01T00:00:01Z"),
+   new Date("1985-07-01T00:00:01Z"),
+   new Date("1988-01-01T00:00:01Z"),
+   new Date("1990-01-01T00:00:01Z"),
+   new Date("1991-01-01T00:00:01Z"),
+   new Date("1992-07-01T00:00:01Z"),
+   new Date("1993-07-01T00:00:01Z"),
+   new Date("1994-07-01T00:00:01Z"),
+   new Date("1996-01-01T00:00:01Z"),
+   new Date("1997-07-01T00:00:01Z"),
+   new Date("1999-01-01T00:00:01Z"),
+   new Date("2006-01-01T00:00:01Z"),
+   new Date("2009-01-01T00:00:01Z"),
+   new Date("2012-07-01T00:00:01Z"),
+   new Date("2015-07-01T00:00:01Z"),
+   new Date("2017-01-01T00:00:01Z"),
+  ];
+  const rubberSeconds = [
+   new Date("1957-12-31T23:13:00.003Z"),
+   new Date("1959-12-31T23:38:29.057Z"),
+   new Date("1960-12-31T23:36:53.577Z"),
+   new Date("1960-12-31T23:36:53.577Z"),
+   new Date("1961-07-31 23:53:13.302Z"),
+   new Date("1961-07-31 23:53:13.352Z"),
+   new Date("1961-12-31 23:49:38.154Z"),
+   new Date("1963-10-31 23:32:57.303Z"),
+   new Date("1963-10-31 23:32:57.303Z"),
+   new Date("1963-12-31 23:24:12.234Z"),
+   new Date("1964-03-31 23:43:42.016Z"),
+   new Date("1964-03-31 23:43:42.016Z"),
+   new Date("1964-08-31 23:40:06.718Z"),
+   new Date("1964-08-31 23:40:06.718Z"),
+   new Date("1964-12-31 23:22:36.460Z"),
+   new Date("1964-12-31 23:22:36.460Z"),
+   new Date("1965-02-28 23:42:31.283Z"),
+   new Date("1965-02-28 23:42:31.283Z"),
+   new Date("1965-06-30 23:25:01.025Z"),
+   new Date("1965-06-30 23:25:01.025Z"),
+   new Date("1965-08-31 23:52:50.845Z"),
+   new Date("1965-08-31 23:52:50.845Z"),
+   new Date("1965-12-31 23:35:20.687Z"),
+   new Date("1968-01-31 23:23:48.714Z"),
+   new Date("1968-01-31 23:23:48.814Z"),
+   new Date("1971-12-31T23:46:30.108Z"),
+   new Date("1971-12-31T23:46:30.108Z"),
+   new Date("1972-01-01T00:00:01Z"),
+  ];
+  const rubberValues = [
+    -0.002598,
+     0.943482,
+     1.417818,
+     1.422818,
+     1.69757,
+     1.64757,
+     1.845858,
+     2.5972788,
+     2.6972788,
+     2.765794,
+     2.88373,
+     2.98373,
+     3.182018,
+     3.282018,
+     3.44013,
+     3.54013,
+     3.616594,
+     3.716594,
+     3.874706,
+     3.974706,
+     4.055058,
+     4.155058,
+     4.31317,
+     6.285682,
+     6.185682,
+     9.892242,
+     10,
+     10,
+  ]
+   
 
-  const TAI_UTC_OFFSET_SECONDS = 37; // Current hardcoded offset
-  const TT_TAI_OFFSET_SECONDS = 32.184; // Constant offset between TT and TAI
+  function calcLeapSeconds(thisTime) {
+      let leapS;
+      if (thisTime.getTime() > leapSeconds[0].getTime()) {
+        leapS = 10 + findNearestIndex(leapSeconds, thisTime);
+      } else if (thisTime.getTime() > rubberSeconds[0].getTime()) {
+         firstIndex = findNearestIndex(rubberSeconds, thisTime);
+         secondIndex = firstIndex + 1;
+         RF = (thisTime - rubberSeconds[firstIndex]) / (rubberSeconds[secondIndex] - rubberSeconds[firstIndex]);
+         leapS = ((1-RF)*rubberValues[firstIndex]) + (RF * rubberValues[secondIndex])
+      } else {
+          leapS = 0
+      }
+      return leapS;
+  }
+
+  function findNearestIndex(times, thisTime) {    
+    const topIndex = times.length - 1;
+    const topI = Math.floor(Math.log2(topIndex));      
+    let midIndex = Math.ceil(topIndex / 2);
+    let offIndex = Math.ceil(midIndex / 2);
+    for (let i = 0; i < topI; i++) {
+      if (thisTime.getTime() > times[midIndex].getTime()) {
+        midIndex = midIndex + offIndex;
+        if (midIndex > topIndex) {
+          midIndex = topIndex
+        }
+      }
+      if (thisTime.getTime() < times[midIndex].getTime()) {
+        midIndex = midIndex - offIndex;
+          if (midIndex < 0) {
+            midIndex = 0
+          }
+      }
+      offIndex = Math.ceil(offIndex / 2);
+    }
+    return midIndex;
+  }
+
+  function openOfficeMod(dividend, divisor) {
+    let remainder = dividend % divisor;
+    if ((remainder < 0 && divisor > 0) || (remainder > 0 && divisor < 0)) {
+      remainder += divisor;
+    }
+    return remainder;
+  }     
   
   const timezones = [
       { id: "tz-1", name: "Time Zone 1", default: "America/New_York" },
@@ -118,14 +252,16 @@
   ];
 
   // Custom function to format a Date object with both date and time
-  function formatTimeWithDate(date, timezone) {
+  function formatTimeWithDate(date, timezone, u12hr, FSDigits) {
     const options = {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
+      hour12: u12hr,   
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
+      fractionalSecondDigits: FSDigits,
       timeZone: timezone
     };
     return date.toLocaleString('en-US', options);
@@ -167,67 +303,72 @@
   
   function updateTimestamps() {
     let now;
+    let fracSecDig;
     if (timeModeSelect.value === "current") {
         now = new Date();
+        fracSecDig = 1;
+         use12hr = true;
     } else {
         const userTimeValue = userTimeInput.value;
         if (userTimeValue) {
-            now = new Date(userTimeValue);
+            now = new Date(userTimeValue + 'Z');
+            fracSecDig = 3;
+            use12hr = false;
         } else {
-            // If user input is empty, default to current time for display
-            now = new Date(); 
+            document.getElementById('txt').innerHTML = "<h1>Please select a time.</h1>";
+            return;
         }
     }
 
+    const TAI_UTC_OFFSET_MILLISECONDS = 1000 * calcLeapSeconds(now);
+
     const Pta_per_ms = 1/30550;
     const Jun_21_1998_noon_UTC = 898430400000;
-    const TAI_leap_milliseconds = 37000; // Hardcoded, as per original version
     const anchor_byte3 = parseInt("8209", 16);
     const anchor_byte2 = parseInt("2800", 16);
     const anchor_byte1 = parseInt("0000", 16);
 
     let ms_raw = now.getTime();
-    let ms_fix = (ms_raw - (Jun_21_1998_noon_UTC - TAI_leap_milliseconds));
+    let ms_fix = (ms_raw - Jun_21_1998_noon_UTC) + TAI_UTC_OFFSET_MILLISECONDS;
     let Pta_raw = Math.round(ms_fix * Pta_per_ms * 1000) / 1000;
 
     let Tta_txt = "";
     let Pta_txt = "";
 
     if (bullysellect.value == 1) {
-	    Tta_txt = Math.floor((ms_fix / 100) % 10).toString().padStart(1, '0') + " sec)";
-      Pta_txt = Math.floor((ms_fix / 1000) % 3055).toString().padStart(1, '0') + ".";
+	    Tta_txt = Math.floor(openOfficeMod(ms_fix / 100, 10)).toString().padStart(1, '0') + " sec)";
+      Pta_txt = Math.floor(openOfficeMod(ms_fix / 1000, 3055)).toString().padStart(1, '0') + ".";
     }
 
     if (bullysellect.value == 2) {
-	    Tta_txt = Math.floor((Pta_raw * 1000) % 1000).toString().padStart(3, '0') + " %)";
-      Pta_txt = Math.floor(Pta_raw % 100).toString().padStart(2, '0') + ".";
+	    Tta_txt = Math.floor(openOfficeMod(Pta_raw * 1000, 1000)).toString().padStart(3, '0') + " %)";
+      Pta_txt = Math.floor(openOfficeMod(Pta_raw, 100)).toString().padStart(2, '0') + ".";
     }
 
     if (bullysellect.value == 3) {
-	    Tta_txt = Math.floor((Pta_raw * 1000) % 1000).toString().padStart(3, '0') + " Tta)";
-      Pta_txt = Math.floor(Pta_raw % 100).toString().padStart(2, '0') + " Pta ";
+	    Tta_txt = Math.floor(openOfficeMod(Pta_raw * 1000, 1000)).toString().padStart(3, '0') + " Tta)";
+      Pta_txt = Math.floor(openOfficeMod(Pta_raw, 100)).toString().padStart(2, '0') + " Pta ";
     }
 
     if (bullysellect.value == 4) {
-	    Tta_txt = Math.floor(((Pta_raw / 100) * 16**4) %16**4).toString(16).toUpperCase().padStart(4, '0') + " hex)";
+	    Tta_txt = Math.floor(openOfficeMod((Pta_raw / 100) * 16**4,16**4)).toString(16).toUpperCase().padStart(4, '0') + " hex)";
       Pta_txt = "";
     }
 
-    let Pta_dec = ((Pta_raw % 100) + 100) % 100;
+    let Pta_dec = openOfficeMod(openOfficeMod(Pta_raw, 100) + 100, 100);
     Pta = ((Pta_raw - Pta_dec) / 100) + anchor_byte1;
 
-    let Pta_hex1 = ((Pta % 16**4) + 16**4) % 16**4;
+    let Pta_hex1 = openOfficeMod(openOfficeMod(Pta, 16**4) + 16**4, 16**4);
     Pta = ((Pta - Pta_hex1) / 16**4) + anchor_byte2;
 
-    let Pta_hex2 = ((Pta % 16**4) + 16**4) % 16**4;
+    let Pta_hex2 = openOfficeMod(openOfficeMod(Pta, 16**4) + 16**4, 16**4);
     let Pta_hex3 = ((Pta - Pta_hex2) / 16**4) + anchor_byte3;
 
     document.getElementById('txt').innerHTML =  "<h1>" 
         + Pta_hex3.toString(16).toUpperCase().padStart(4, "0") 
         + " " + Pta_hex2.toString(16).toUpperCase().padStart(4, "0") 
         + " " + Pta_hex1.toString(16).toUpperCase().padStart(4, "0")
-        + " <small>(+ " + Pta_txt + Tta_txt
-        + "</small></h1>";
+        + " <small>(+ " + Pta_txt + Tta_txt + "</small></h1>";
 
     // Update each user-selected time zone
     timezones.forEach(tz => {
@@ -236,27 +377,28 @@
         const selectedTimezone = select.value;
 
         if (selectedTimezone === 'TAI') {
-            const taiTime = new Date(now.getTime() + TAI_UTC_OFFSET_SECONDS * 1000);
-            display.textContent = `${formatTimeWithDate(taiTime, 'UTC')} (TAI)`;
+            const taiTime = new Date(now.getTime() + TAI_UTC_OFFSET_MILLISECONDS);
+            display.textContent = `${formatTimeWithDate(taiTime, 'UTC', use12hr, fracSecDig)} (TAI)`;
         } else if (selectedTimezone === 'TT') {
-            const taiTime = new Date(now.getTime() + TAI_UTC_OFFSET_SECONDS * 1000);
-            const ttTime = new Date(taiTime.getTime() + TT_TAI_OFFSET_SECONDS * 1000);
-            display.textContent = `${formatTimeWithDate(ttTime, 'UTC')} (TT)`;
+            const taiTime = new Date(now.getTime() + TAI_UTC_OFFSET_MILLISECONDS);
+            const ttTime = new Date(taiTime.getTime() + TT_TAI_OFFSET_MILLISECONDS);
+            display.textContent = `${formatTimeWithDate(ttTime, 'UTC', use12hr, fracSecDig)} (TT)`;
         } else {
-            display.textContent = formatTimeWithDate(now, selectedTimezone);
+            display.textContent = formatTimeWithDate(now, selectedTimezone, use12hr, fracSecDig);
         }
     });
 
     if (timeModeSelect.value === "current") {
-        timerId = setTimeout(updateTimestamps, 30);
+        animationFrameId = requestAnimationFrame(updateTimestamps);
     }
   }
 
   function handleTimeModeChange() {
       if (timeModeSelect.value === "user-selected") {
           userTimeInput.style.display = "block";
-          if (timerId) {
-              clearTimeout(timerId);
+          if (animationFrameId) {
+              cancelAnimationFrame(animationFrameId);
+              animationFrameId = null;
           }
           updateTimestamps();
       } else {
