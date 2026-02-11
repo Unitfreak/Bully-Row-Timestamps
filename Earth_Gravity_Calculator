@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WGS84 Geophysics & Relativity</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f2f5;
+            padding: 20px;
+        }
+        .calculator-container {
+            background-color: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 440px;
+        }
+        h2 { margin-top: 0; color: #333; font-size: 1.5rem; text-align: center; }
+        .form-group { margin-bottom: 12px; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.9rem; color: #555; }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+        input:disabled {
+            background-color: #e9ecef;
+            color: #adb5bd;
+            cursor: not-allowed;
+        }
+        .mode-toggle {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .mode-btn {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #007bff;
+            background: white;
+            color: #007bff;
+            cursor: pointer;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+        .mode-btn.active {
+            background: #007bff;
+            color: white;
+        }
+        button.calc-trigger {
+            width: 100%;
+            padding: 12px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #eee;
+        }
+        .result-line {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid #edf0f2;
+        }
+        .result-line:last-child { border-bottom: none; }
+        .label-text { color: #666; font-size: 0.85rem; flex: 1; }
+        .val-text { font-weight: bold; color: #007bff; text-align: right; font-family: 'Courier New', Courier, monospace; }
+        .highlight { color: #d9534f; }
+        .orbital-note { font-size: 0.75rem; color: #666; font-style: italic; margin-top: 5px; text-align: center;}
+    </style>
+</head>
+<body>
+
+    <div class="calculator-container">
+        <h2>WGS84 Geophysics & Relativity</h2>
+        
+        <label>Operational Mode:</label>
+        <div class="mode-toggle">
+            <button class="mode-btn active" id="mode-fixed" onclick="setMode('fixed')">Fixed Ground</button>
+            <button class="mode-btn" id="mode-orbital" onclick="setMode('orbital')">Orbital (Freefall)</button>
+        </div>
+
+        <div class="form-group">
+            <label for="locationSelector">Preset Location:</label>
+            <select id="locationSelector" onchange="populateLocation()">
+                <option value="">--Custom Input--</option>
+                <option value="90,0,0">North Pole</option>
+                <option value="53.35,85,0">Dublin, Ireland</option>
+                <option value="40.7128,10,0">New York City</option>
+                <option value="0,0,0">Equator (Sea Level)</option>
+                <option value="27.9881,8848.86,0">Mount Everest</option>
+                <option value="-9.1216,6768,0">Mount Huascarán</option>
+                <option value="0,20200000,1">GPS Altitude (Orbit)</option>
+                <option value="0,35786000,1">Geosynchronous Orbit</option>
+                <option value="0,384400000,1">Lunar Distance</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="latitude" id="latLabel">Latitude (deg):</label>
+            <input type="number" id="latitude" placeholder="0.0" step="any" value="0">
+        </div>
+        <div class="form-group">
+            <label for="altitude" id="altLabel">Altitude (meters):</label>
+            <input type="number" id="altitude" value="0" step="any">
+        </div>
+        <div class="form-group">
+            <label for="unitControl">Units:</label>
+            <select id="unitControl" onchange="updateUnitLabels()">
+                <option value="m/s²">m/s² (Metric)</option>
+                <option value="ft/s²">ft/s² (Imperial)</option>
+                <option value="c/Zta">c/Zta (Bully Metric)</option>
+                <option value="μc/BMT">μc/BMT (Bully Metric)</option>
+            </select>
+        </div>
+        <button class="calc-trigger" onclick="calculate()">Calculate Physics</button>
+        <div class="orbital-note" id="mode-desc">Mode: Stationary relative to Earth's surface.</div>
+        
+        <div id="result">
+            <div class="result-line">
+                <span class="label-text">Pure Gravitation</span>
+                <span class="val-text highlight" id="res-mass">--</span>
+            </div>
+            <div class="result-line">
+                <span class="label-text" id="cent-label">Centripetal (Rotation)</span>
+                <span class="val-text highlight" id="res-cent">--</span>
+            </div>
+            <div class="result-line">
+                <span class="label-text">Effective Gravity (Net)</span>
+                <span class="val-text highlight" id="res-grav">--</span>
+            </div>
+            <div class="result-line">
+                <span class="label-text">Sea Level Radius</span>
+                <span class="val-text" id="res-slr">--</span>
+            </div>
+            <div class="result-line">
+                <span class="label-text">GR Dilation (Alt)</span>
+                <span class="val-text" id="res-gr">--</span>
+            </div>
+            <div class="result-line">
+                <span class="label-text">SR Dilation (Velocity)</span>
+                <span class="val-text" id="res-sr">--</span>
+            </div>
+            <div class="result-line">
+                <span class="label-text">Net Clock Ratio</span>
+                <span class="val-text" id="res-net">--</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const M_TO_FT = 1250 / 381;
+        const M_TO_MILE = 1 / 1609.344;
+        const C = 299792458;
+        const MLA = 9.15865959; 
+        const GLA = 9158.65959; 
+        const ZTA_SEC = 30550000;
+        const BMT_SEC = 3055;
+
+        const WGS84_GM = 3.986004418e14; 
+        const WGS84_OMEGA = 7.292115e-5;  
+        const WGS84_A = 6378137.0;        
+        const WGS84_B = 6356752.3142;     
+
+        let currentMode = 'fixed';
+        let previousUnit = 'm/s²';
+
+        function setMode(mode) {
+            const oldMode = currentMode;
+            currentMode = mode;
+            const latInput = document.getElementById('latitude');
+            const latLabel = document.getElementById('latLabel');
+            const altInput = document.getElementById('altitude');
+            const unit = document.getElementById('unitControl').value;
+            
+            document.getElementById('mode-fixed').classList.toggle('active', mode === 'fixed');
+            document.getElementById('mode-orbital').classList.toggle('active', mode === 'orbital');
+            
+            if (mode === 'orbital') {
+                latInput.disabled = true;
+                latInput.value = 0;
+                latLabel.style.color = "#adb5bd";
+                document.getElementById('mode-desc').textContent = "Mode: Circular orbit velocity (Net G = 0).";
+                document.getElementById('cent-label').textContent = "Centripetal (Orbital)";
+            } else {
+                latInput.disabled = false;
+                latLabel.style.color = "#555";
+                document.getElementById('mode-desc').textContent = "Mode: Stationary relative to Earth's surface.";
+                document.getElementById('cent-label').textContent = "Centripetal (Rotation)";
+            }
+
+            // If mode changed, update the altitude value to the new mode's units
+            if (oldMode !== mode) {
+                let val = parseFloat(altInput.value) || 0;
+                let meters;
+                
+                // 1. Convert OLD value to meters
+                if (oldMode === 'fixed') {
+                    if (unit === 'ft/s²') meters = val / M_TO_FT;
+                    else if (unit === 'c/Zta' || unit === 'μc/BMT') meters = val * MLA;
+                    else meters = val;
+                } else {
+                    if (unit === 'ft/s²') meters = val / M_TO_MILE;
+                    else if (unit === 'c/Zta' || unit === 'μc/BMT') meters = val * GLA;
+                    else meters = val * 1000;
+                }
+
+                // 2. Convert meters to NEW value
+                if (mode === 'fixed') {
+                    if (unit === 'ft/s²') altInput.value = (meters * M_TO_FT).toFixed(2);
+                    else if (unit === 'c/Zta' || unit === 'μc/BMT') altInput.value = (meters / MLA).toFixed(4);
+                    else altInput.value = meters.toFixed(2);
+                } else {
+                    if (unit === 'ft/s²') altInput.value = (meters * M_TO_MILE).toFixed(4);
+                    else if (unit === 'c/Zta' || unit === 'μc/BMT') altInput.value = (meters / GLA).toFixed(6);
+                    else altInput.value = (meters / 1000).toFixed(4);
+                }
+            }
+
+            updateUnitLabels(true); // Update labels without re-calculating value
+        }
+
+        function updateUnitLabels(skipConversion = false) {
+            const currentUnit = document.getElementById('unitControl').value;
+            const altInput = document.getElementById('altitude');
+            const altLabel = document.getElementById('altLabel');
+            let val = parseFloat(altInput.value) || 0;
+
+            if (!skipConversion) {
+                let meters;
+                // Convert from previous system to meters
+                if (currentMode === 'fixed') {
+                    if (previousUnit === 'ft/s²') meters = val / M_TO_FT;
+                    else if (previousUnit === 'c/Zta' || previousUnit === 'μc/BMT') meters = val * MLA;
+                    else meters = val;
+                } else {
+                    if (previousUnit === 'ft/s²') meters = val / M_TO_MILE;
+                    else if (previousUnit === 'c/Zta' || previousUnit === 'μc/BMT') meters = val * GLA;
+                    else meters = val * 1000;
+                }
+
+                // Convert from meters to new system
+                if (currentMode === 'fixed') {
+                    if (currentUnit === 'ft/s²') altInput.value = (meters * M_TO_FT).toFixed(2);
+                    else if (currentUnit === 'c/Zta' || currentUnit === 'μc/BMT') altInput.value = (meters / MLA).toFixed(4);
+                    else altInput.value = meters.toFixed(2);
+                } else {
+                    if (currentUnit === 'ft/s²') altInput.value = (meters * M_TO_MILE).toFixed(4);
+                    else if (currentUnit === 'c/Zta' || currentUnit === 'μc/BMT') altInput.value = (meters / GLA).toFixed(6);
+                    else altInput.value = (meters / 1000).toFixed(4);
+                }
+            }
+
+            // Update Label Text
+            if (currentMode === 'fixed') {
+                if (currentUnit === 'ft/s²') altLabel.textContent = "Altitude (feet):";
+                else if (currentUnit === 'c/Zta' || currentUnit === 'μc/BMT') altLabel.textContent = "Altitude (Mla):";
+                else altLabel.textContent = "Altitude (meters):";
+            } else {
+                if (currentUnit === 'ft/s²') altLabel.textContent = "Altitude (miles):";
+                else if (currentUnit === 'c/Zta' || currentUnit === 'μc/BMT') altLabel.textContent = "Altitude (Gla):";
+                else altLabel.textContent = "Altitude (km):";
+            }
+
+            previousUnit = currentUnit;
+            calculate();
+        }
+
+        function populateLocation() {
+            const selector = document.getElementById('locationSelector');
+            if (!selector.value) return;
+            const [lat, altMeters, modeFlag] = selector.value.split(',');
+            const unit = document.getElementById('unitControl').value;
+            
+            setMode(modeFlag === '1' ? 'orbital' : 'fixed');
+            
+            if (currentMode !== 'orbital') {
+                document.getElementById('latitude').value = lat;
+            }
+            
+            let displayAlt = parseFloat(altMeters);
+            if (currentMode === 'fixed') {
+                if (unit === 'ft/s²') displayAlt *= M_TO_FT;
+                else if (unit === 'c/Zta' || unit === 'μc/BMT') displayAlt /= MLA;
+            } else {
+                if (unit === 'ft/s²') displayAlt *= M_TO_MILE;
+                else if (unit === 'c/Zta' || unit === 'μc/BMT') displayAlt /= GLA;
+                else displayAlt /= 1000;
+            }
+            
+            document.getElementById('altitude').value = displayAlt.toFixed(6);
+            calculate();
+        }
+
+        function calculate() {
+            const lat = parseFloat(document.getElementById('latitude').value);
+            const userAlt = parseFloat(document.getElementById('altitude').value) || 0;
+            const unit = document.getElementById('unitControl').value;
+
+            if (isNaN(lat)) return;
+    
+            let altMeters = userAlt;
+            if (currentMode === 'fixed') {
+                if (unit === 'ft/s²') altMeters /= M_TO_FT;
+                else if (unit === 'c/Zta' || unit === 'μc/BMT') altMeters *= MLA;
+            } else {
+                if (unit === 'ft/s²') altMeters /= M_TO_MILE;
+                else if (unit === 'c/Zta' || unit === 'μc/BMT') altMeters *= GLA;
+                else altMeters *= 1000;
+            }
+
+            const latRad = lat * Math.PI / 180;
+            const cosL = Math.cos(latRad);
+            const sinL = Math.sin(latRad);
+            const sin2L = sinL * sinL;
+
+            const den = Math.sqrt(Math.pow(WGS84_A * cosL, 2) + Math.pow(WGS84_B * sinL, 2));
+            const slRadiusMeters = Math.sqrt((Math.pow(WGS84_A**2 * cosL, 2) + Math.pow(WGS84_B**2 * sinL, 2)) / (den**2));
+            const totalRadius = slRadiusMeters + altMeters;
+
+            const J2 = 1.08262668355e-3; 
+            const rRatio = WGS84_A / totalRadius;
+            const J2_Factor = 1.5 * J2 * Math.pow(rRatio, 2);
+            const local_gravitation = (WGS84_GM / Math.pow(totalRadius, 2)) * (1 - J2_Factor * (3 * sin2L - 1));
+
+            let velocity, local_centripetal;
+            
+            if (currentMode === 'orbital') {
+                local_centripetal = local_gravitation;
+                velocity = Math.sqrt(local_centripetal * totalRadius);
+            } else {
+                local_centripetal = Math.pow(WGS84_OMEGA, 2) * totalRadius * cosL;
+                velocity = WGS84_OMEGA * totalRadius * cosL;
+            }
+
+            const localG_effective = local_gravitation - local_centripetal;
+
+            const srDilation = Math.sqrt(1 - (Math.pow(velocity, 2) / Math.pow(C, 2)));
+            const pot_TotalRadius = (WGS84_GM / totalRadius) * (1 - (J2_Factor / 3) * (3 * sin2L - 1));
+            const J2_Pole = 1.5 * J2 * Math.pow(WGS84_A / WGS84_B, 2);
+            const pot_NorthPole = (WGS84_GM / WGS84_B) * (1 - (J2_Pole / 3) * (2));
+            const potDiff = pot_TotalRadius - pot_NorthPole;
+            const grDilation = 1 / (1 + (potDiff / (C * C)));
+            const netDilation = grDilation * srDilation;
+
+            displayResults(localG_effective, local_centripetal, local_gravitation, slRadiusMeters, grDilation, srDilation, unit, netDilation);
+        }
+
+        function displayResults(gEff, gCent, gMass, slr, gr, sr, unit, net) {
+            let gOut, cOut, mOut, rOut, gUnit, rUnit, gPrec = 8;
+
+            if (unit === 'ft/s²') {
+                gOut = gEff * M_TO_FT; cOut = gCent * M_TO_FT; mOut = gMass * M_TO_FT;
+                rOut = slr * M_TO_MILE; gUnit = 'ft/s²'; rUnit = 'miles';
+            } else if (unit === 'c/Zta') {
+                const conv = ZTA_SEC / C;
+                gOut = gEff * conv; cOut = gCent * conv; mOut = gMass * conv;
+                rOut = slr / GLA; gUnit = 'c/Zta'; rUnit = 'Gla';
+            } else if (unit === 'μc/BMT') {
+                const conv = (1000000 * BMT_SEC) / C;
+                gOut = gEff * conv; cOut = gCent * conv; mOut = gMass * conv;
+                rOut = slr / GLA; gUnit = 'μc/BMT'; rUnit = 'Gla';
+            } else {
+                gOut = gEff; cOut = gCent; mOut = gMass;
+                rOut = slr / 1000; gUnit = 'm/s²'; rUnit = 'km';
+            }
+
+            document.getElementById('res-mass').textContent = `${mOut.toFixed(gPrec)} ${gUnit}`;
+            document.getElementById('res-cent').textContent = `${cOut.toFixed(gPrec)} ${gUnit}`;
+            document.getElementById('res-grav').textContent = `${Math.abs(gOut) < 1e-10 ? "0.00000000" : gOut.toFixed(gPrec)} ${gUnit}`;
+            document.getElementById('res-slr').textContent = `${rOut.toLocaleString(undefined, {minimumFractionDigits: 6})} ${rUnit}`;
+            document.getElementById('res-gr').textContent = gr.toFixed(15);
+            document.getElementById('res-sr').textContent = sr.toFixed(15);
+            document.getElementById('res-net').textContent = net.toFixed(15);
+        }        
+    </script>
+</body>
+</html>
